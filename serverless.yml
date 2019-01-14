@@ -1,0 +1,38 @@
+service: offerzen-swag
+provider:
+    name: aws
+    stage: ${opt:stage, self:custom.defaultStage}
+    region: eu-west-1
+    runtime: nodejs8.10
+
+plugins:
+  - fullstack-serverless 
+custom:
+    prune:
+        automatic: true
+        number: 1
+    defaultStage: dev
+    profiles:
+        dev: 
+          AWS_PROFILE: <CHANGE THIS>
+          AWS_ACCOUNT_NUMBER: <CHANGE THIS>
+          BUCKET_NAME: <CHANGE THIS>
+    fullstack:
+      domain: swag.offerzen.com
+      certificate: we-need-one    # The ARN for the SSL cert to use form AWS CertificateManager 
+      bucketName: ${self:custom.profiles.${self:provider.stage}.BUCKET_NAME}                # Unique name for the S3 bucket to host the client assets 
+      distributionFolder: build            # Path to the client assets to be uploaded to S3 
+      indexDocument: index.html                  # The index document to use 
+      errorDocument: index.html                  # The error document to use 
+      singlePageApp: true                       # If true 403 errors will be rerouted (missing assets) to your root index document to support single page apps like React and Angular where the js framework handles routing 
+      apiPath: api                               # The path prefix for your API Gateway lambdas. The path for the lambda http event trigger needs to start with this too eg. api/myMethod  
+      clientCommand: yarn build                   # Command to generate the client assets. Defaults to doing nothing 
+      clientSrcPath: ./                      # The path to where you want to run the clientCommand 
+      #waf: 00000000-0000-0000-0000-000000000000  # ID of the Web Application Firewall. Defaults to not used 
+    #   logging:
+    #     bucket: logs-${self:custom.profiles.${self:provider.stage}.BUCKET_NAME}
+    #     prefix: logs
+
+resources:
+  Resources:
+    Bucket: ${file(./CloudFormation/S3/Bucket.yml):Bucket}
